@@ -34,41 +34,71 @@ src/
 
 ## ⚡ Installation & Configuration
 
-### 1. Prérequis
-- Python 3.9+
-- Clé API OpenAI
-- ChromaDB (local ou distant)
+### 🐳 Méthode Recommandée : Docker (Production Ready)
 
-### 2. Installation
 ```bash
 # Clone du projet
-git clone <repository-url>
+git clone https://github.com/cisbeo/scorpius-rag.git
+cd scorpius-rag
+
+# Configuration
+cp .env.example .env
+# Éditez .env et renseignez votre clé OpenAI
+
+# Démarrage complet
+docker compose up -d
+
+# Vérification
+docker compose ps
+docker compose logs scorpius-rag
+```
+
+**Services déployés :**
+- 🚀 **Scorpius RAG** : http://localhost:8000
+- 🗄️ **ChromaDB** : http://localhost:8001  
+- 🔴 **Redis** : localhost:6379
+
+### 🔧 Méthode Alternative : Installation Python
+
+```bash
+# Prérequis : Python 3.11+, clé API OpenAI
+
+# Clone et setup
+git clone https://github.com/cisbeo/scorpius-rag.git
 cd scorpius-rag
 
 # Environnement virtuel
 python -m venv venv
 source venv/bin/activate  # Linux/Mac
-# ou
-venv\Scripts\activate     # Windows
+# ou venv\Scripts\activate  # Windows
 
-# Dépendances
+# Installation
 pip install -r requirements.txt
-```
 
-### 3. Configuration
-```bash
-# Copie du fichier de configuration
+# Configuration
 cp .env.example .env
+# Éditez .env avec votre clé OpenAI
 
-# Édition des variables (obligatoire)
-nano .env
+# Démarrage ChromaDB séparé
+chroma run --path ./data/chromadb --port 8000
 ```
 
-**Variables obligatoires :**
+### 🔑 Configuration OpenAI (Obligatoire)
+
+1. **Obtenez votre clé** : https://platform.openai.com/api-keys
+2. **Éditez `.env`** :
 ```bash
-OPENAI_API_KEY=sk-your-openai-api-key
-CHROMA_HOST=localhost
-CHROMA_PORT=8000
+OPENAI_API_KEY=sk-proj-votre-vraie-cle-ici
+```
+3. **Testez la config** :
+```bash
+# Avec Docker
+docker compose exec scorpius-rag python -c "
+from src.utils.config import Config
+config = Config.from_env()
+config.validate()
+print('✅ Configuration validée!')
+"
 ```
 
 ## 🚀 Usage
