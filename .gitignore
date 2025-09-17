@@ -1,0 +1,98 @@
+# ===== Configuration et Secrets =====
+.env
+.env.local
+.env.docker
+.env.prod
+*.key
+*.pem
+*.crt
+config/secrets/
+secrets/
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Cache directories
+cache/
+.cache/
+.pytest_cache/
+
+# Data directories
+data/
+chromadb/
+
+# Logs
+*.log
+logs/
+
+# Coverage
+.coverage
+htmlcov/
+.coverage.*
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ===== Docker =====
+.dockerignore.local
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== Monitoring =====
+prometheus/
+grafana/
+
+# ===== Temporary files =====
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== Scorpius RAG spécifiques =====
+# Ne pas ignorer .env.example (template)
+!.env.example
+# Ne pas ignorer les fichiers de config Docker
+!docker/
+!scripts/

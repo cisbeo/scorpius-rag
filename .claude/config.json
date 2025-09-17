@@ -1,0 +1,74 @@
+{
+  "project": {
+    "name": "Scorpius RAG - AO Publiques",
+    "version": "1.0.0",
+    "description": "Assistant IA spécialisé analyse appels d'offres publics français",
+    "type": "ml_rag_system",
+    "domain": "french_public_procurement"
+  },
+  
+  "development": {
+    "language": "python",
+    "version": "3.9+",
+    "framework": "streamlit",
+    "databases": ["chromadb", "vector_db"],
+    "apis": ["openrouter", "openai_fallback"],
+    "deployment": "docker_kubernetes"
+  },
+  
+  "coding_standards": {
+    "style_guide": "google",
+    "max_line_length": 88,
+    "formatter": "black",
+    "linter": "flake8",
+    "type_hints": true,
+    "docstrings": "google_format",
+    "test_coverage_min": 80
+  },
+  
+  "ai_assistance": {
+    "auto_complete": true,
+    "code_review": true,
+    "test_generation": true,
+    "documentation_generation": true,
+    "refactoring_suggestions": true,
+    "security_analysis": true,
+    "performance_optimization": true
+  },
+  
+  "architecture": {
+    "pattern": "modular_microservices",
+    "separation_concerns": true,
+    "dependency_injection": true,
+    "error_handling": "comprehensive",
+    "logging": "structured",
+    "monitoring": "metrics_alerts"
+  },
+  
+  "business_context": {
+    "target_users": "commercial_teams_esn",
+    "use_cases": [
+      "ao_qualification",
+      "dcr_analysis", 
+      "competitive_intelligence",
+      "technical_memo_generation",
+      "compliance_checking"
+    ],
+    "success_metrics": [
+      "win_rate_improvement",
+      "analysis_time_reduction",
+      "compliance_accuracy",
+      "user_satisfaction"
+    ]
+  },
+  
+  "technology_preferences": {
+    "embedding_models": "voyage-large-2-instruct",
+    "generation_models": "claude-3.5-sonnet",
+    "vector_database": "chromadb",
+    "web_framework": "streamlit",
+    "async_framework": "asyncio",
+    "testing_framework": "pytest",
+    "containerization": "docker"
+  }
+}

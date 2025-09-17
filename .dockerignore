@@ -1,0 +1,121 @@
+# ===== Git et contrôle de version =====
+.git
+.gitignore
+.gitattributes
+*.git*
+
+# ===== Documentation et métadonnées =====
+README.md
+*.md
+docs/
+.claude/
+CHANGELOG*
+LICENSE*
+
+# ===== Environnements Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.python-version
+.pyenv
+
+# ===== Données et cache =====
+data/
+cache/
+logs/
+*.log
+*.sqlite
+*.db
+*.sqlite3
+
+# ===== Configuration sensible =====
+.env
+.env.*
+!.env.example
+config/secrets/
+secrets/
+*.key
+*.pem
+*.crt
+*.p12
+
+# ===== Tests et couverture =====
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# ===== IDE et éditeurs =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Build et distribution =====
+build/
+dist/
+*.egg-info/
+.eggs/
+*.whl
+
+# ===== Docker lui-même =====
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# ===== CI/CD =====
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# ===== Développement =====
+.editorconfig
+.pre-commit-config.yaml
+mypy.ini
+setup.cfg
+tox.ini
+.flake8
+.pylintrc
+pyproject.toml
+
+# ===== Jupyter Notebooks =====
+.ipynb_checkpoints/
+*.ipynb
+
+# ===== Fichiers temporaires =====
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# ===== Spécifique au projet =====
+requirements-dev.txt
+setup.py
+examples/
+scripts/
+notebooks/
+
+# ===== Monitoring et logs =====
+prometheus/
+grafana/
+monitoring/

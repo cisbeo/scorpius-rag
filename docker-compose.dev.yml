@@ -1,0 +1,141 @@
+# Docker Compose pour développement Scorpius RAG
+# Configuration optimisée pour le développement local
+
+services:
+  # ===== Service Développement Scorpius RAG =====
+  scorpius-rag-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: scorpius-rag-dev
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8888:8888"  # Jupyter pour développement
+    environment:
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-large}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_TIMEOUT=${OPENAI_TIMEOUT:-30}
+      - OPENAI_MAX_RETRIES=${OPENAI_MAX_RETRIES:-3}
+      - OPENAI_RATE_LIMIT_RPM=${OPENAI_RATE_LIMIT_RPM:-500}  # Limite réduite pour dev
+      
+      # ChromaDB Configuration
+      - CHROMA_HOST=chromadb-dev
+      - CHROMA_PORT=8000
+      - CHROMA_PERSISTENT_PATH=/app/data/chromadb
+      
+      # Cache Configuration
+      - CACHE_ENABLED=${CACHE_ENABLED:-true}
+      - CACHE_DIR=/app/cache/embeddings
+      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-1}  # TTL réduit pour dev
+      - CACHE_MAX_SIZE_MB=${CACHE_MAX_SIZE_MB:-100}  # Taille réduite pour dev
+      
+      # Application Configuration
+      - LOG_LEVEL=DEBUG
+      - ENVIRONMENT=dev
+      - DEBUG_MODE=true
+      
+      # Performance Configuration (réduite pour dev)
+      - EMBEDDING_BATCH_SIZE=${EMBEDDING_BATCH_SIZE:-10}
+      - MAX_CONCURRENT_REQUESTS=${MAX_CONCURRENT_REQUESTS:-2}
+    
+    volumes:
+      # Mount du code source pour hot-reload
+      - .:/app:rw
+      - /app/__pycache__
+      - dev_cache:/app/cache
+      - dev_logs:/app/logs
+    
+    depends_on:
+      chromadb-dev:
+        condition: service_healthy
+    
+    networks:
+      - scorpius-dev-network
+    
+    # Commande pour hot-reload en développement
+    command: ["python", "-m", "watchdog", "--auto-restart", "--patterns=*.py", "--recursive", "src/", "python", "-m", "src.main"]
+
+  # ===== ChromaDB Development =====
+  chromadb-dev:
+    image: chromadb/chroma:latest
+    container_name: scorpius-chromadb-dev
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - CHROMA_SERVER_AUTHN_CREDENTIALS_FILE=
+      - CHROMA_SERVER_AUTHN_PROVIDER=
+    volumes:
+      - chromadb_dev_data:/chroma/chroma
+    command: ["run", "--host", "0.0.0.0", "--port", "8000"]
+    networks:
+      - scorpius-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ===== Jupyter Lab pour développement =====
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: scorpius-jupyter
+    restart: unless-stopped
+    ports:
+      - "8889:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - JUPYTER_TOKEN=${JUPYTER_TOKEN:-scorpius-dev}
+    volumes:
+      - .:/app:rw
+      - jupyter_data:/home/scorpius/.jupyter
+    networks:
+      - scorpius-dev-network
+    command: ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token=${JUPYTER_TOKEN:-scorpius-dev}"]
+    profiles: ["jupyter"]
+
+  # ===== Tests en continu =====
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: scorpius-test-runner
+    restart: "no"
+    volumes:
+      - .:/app:rw
+      - test_coverage:/app/htmlcov
+    networks:
+      - scorpius-dev-network
+    command: ["pytest", "-v", "--cov=src", "--cov-report=html", "--cov-report=term", "tests/"]
+    profiles: ["testing"]
+
+# ===== Volumes Développement =====
+volumes:
+  dev_cache:
+    driver: local
+  
+  dev_logs:
+    driver: local
+  
+  chromadb_dev_data:
+    driver: local
+  
+  jupyter_data:
+    driver: local
+  
+  test_coverage:
+    driver: local
+
+# ===== Réseau Développement =====
+networks:
+  scorpius-dev-network:
+    driver: bridge

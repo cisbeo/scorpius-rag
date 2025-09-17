@@ -1,0 +1,189 @@
+# Docker Compose pour Scorpius RAG
+# Configuration complète avec ChromaDB, Redis et monitoring
+
+services:
+  # ===== Service Principal Scorpius RAG =====
+  scorpius-rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: scorpius-rag-app
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # OpenAI Configuration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_EMBEDDING_MODEL=${OPENAI_EMBEDDING_MODEL:-text-embedding-3-large}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      - OPENAI_TIMEOUT=${OPENAI_TIMEOUT:-30}
+      - OPENAI_MAX_RETRIES=${OPENAI_MAX_RETRIES:-3}
+      - OPENAI_RATE_LIMIT_RPM=${OPENAI_RATE_LIMIT_RPM:-3000}
+      
+      # ChromaDB Configuration
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_PERSISTENT_PATH=/app/data/chromadb
+      
+      # Redis Configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=${REDIS_DB:-0}
+      
+      # Cache Configuration
+      - CACHE_ENABLED=${CACHE_ENABLED:-true}
+      - CACHE_DIR=/app/cache/embeddings
+      - CACHE_TTL_HOURS=${CACHE_TTL_HOURS:-24}
+      - CACHE_MAX_SIZE_MB=${CACHE_MAX_SIZE_MB:-500}
+      
+      # Application Configuration
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - ENVIRONMENT=prod
+      - DEBUG_MODE=false
+      
+      # Performance Configuration
+      - EMBEDDING_BATCH_SIZE=${EMBEDDING_BATCH_SIZE:-100}
+      - MAX_CONCURRENT_REQUESTS=${MAX_CONCURRENT_REQUESTS:-5}
+    
+    volumes:
+      - scorpius_data:/app/data
+      - scorpius_cache:/app/cache
+      - scorpius_logs:/app/logs
+    
+    depends_on:
+      - chromadb
+      - redis
+    
+    networks:
+      - scorpius-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ===== ChromaDB Service =====
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: scorpius-chromadb
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    networks:
+      - scorpius-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ===== Redis Service =====
+  redis:
+    image: redis:7-alpine
+    container_name: scorpius-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - scorpius-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ===== Monitoring avec Prometheus (optionnel) =====
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: scorpius-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    networks:
+      - scorpius-network
+    profiles: ["monitoring"]
+
+  # ===== Grafana pour visualisation (optionnel) =====
+  grafana:
+    image: grafana/grafana:latest
+    container_name: scorpius-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - scorpius-network
+    profiles: ["monitoring"]
+
+# ===== Volumes Persistants =====
+volumes:
+  scorpius_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  scorpius_cache:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./cache
+  
+  scorpius_logs:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./logs
+  
+  chromadb_data:
+    driver: local
+  
+  redis_data:
+    driver: local
+  
+  prometheus_data:
+    driver: local
+  
+  grafana_data:
+    driver: local
+
+# ===== Réseau =====
+networks:
+  scorpius-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
